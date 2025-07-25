@@ -1,0 +1,34 @@
+INPUT_PARAMETERS
+#Parameters (General)
+suffix         ABACUS
+ntype          2
+pseudo_dir     /home/lijh/abacus/selected-Dojo/Pseudopotential/
+orbital_dir    /home/lijh/abacus/selected-Dojo/selected_Orbs/
+nspin          1    # 1 or 2 or 4. The number of spin components of wave functions. 1 for Spin degeneracy, 2 for Collinear spin polarized, 4 for SOC. Default 1
+symmetry       1    # 0 or 1. 1 for open, default 1.
+esolver_type   ksdft    # ksdft, ofdft, sdft, tddft, etc. Choose the energy solver. Default ksdft.
+ks_solver      genelpa    # Choose the diagonalization method for the Hamiltonian matrix expanded in a certain basis set. Default cg for pw. Default genelpa for lcao.
+
+
+#Parameters (Methods)
+ecutwfc        100
+scf_thr        1e-7
+scf_nmax       300
+relax_nmax     200
+relax_method   cg    # Conjugate gradient algorithm.
+force_thr_ev   0.01
+basis_type     lcao
+calculation    cell-relax    # structure relaxation calculations
+dft_functional PBESOL
+kspacing       0.1
+
+#Parameters (Smearing)
+smearing_method gaussian    # recommend to set fixed for non-conductors, gaussian for semi-conductors, mp for metal. Default gaussian
+smearing_sigma  0.010    # Rydberg, energy range for smearing, default 0.015. Recommend 0.001 for gaussian, 0.008 for mp
+
+mixing_beta     0.5    # The formula for charge mixing be written as rho_new = rho_old + beta * rho_update. Default 0.8 for nspin=1, 0.4 for nspin=2 and nspin=4
+
+#Parameters (File)
+cal_force      1
+cal_stress     1
+
