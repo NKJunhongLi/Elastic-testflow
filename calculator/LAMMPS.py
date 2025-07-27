@@ -1,5 +1,4 @@
 import os
-from PeriodicTable import get_mass
 import numpy as np
 
 

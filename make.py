@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import numpy as np
+
 from copy import deepcopy
 from shutil import copy
 from monty.serialization import loadfn, dumpfn
@@ -30,6 +31,7 @@ def clean_matrix(matrix: np.array, float_tolerance=1.0e-12):
         ]
     )
     return result
+
 
 def create_workpath(pathname: str) -> str:
     """创建新工作目录。如果文件夹重名，自动备份旧文件夹，并新建空的新文件夹"""
@@ -88,7 +90,6 @@ def __make__():
     # 创建工作目录
     cwd = os.getcwd()
     work_path = create_workpath(os.path.join(cwd, "work"))
-    os.chdir(work_path)
 
     norm_deform_list = make_norm_deforms(config["norm_deform"])
     shear_deform_list = make_shear_deforms(config["shear_deform"])
@@ -105,7 +106,10 @@ def __make__():
         os.chdir(os.path.join(work_path, stru_name))
 
         INPUT = os.path.join(work_path, stru_name, "INPUT")  # str型变量，记录ABACUS输入文件的路径
-        in_lammps = os.path.join(work_path, stru_name, "in.lammps")  # # str型变量，记录LAMMPS输入文件的路径
+        in_lammps = os.path.join(work_path, stru_name, "in.lammps")  # str型变量，记录LAMMPS输入文件的路径
+        # 如果有使用deempd势函数模型，定义一个str型变量记录模型文件路径
+        model = os.path.join(cwd, config["interaction"]["model"]) \
+            if config["interaction"]["method"] == "deepmd" else None
 
         if config["calculator"] == "abacus":
             original_conf = Conf.from_abacus(file)
@@ -113,7 +117,7 @@ def __make__():
             original_conf.to_abacus(os.path.join(work_path, stru_name, "STRU"))
 
             # 用平衡结构和配置文件里的"parameters"初始化ABACUS类作为计算器
-            cal = ABACUS(original_conf, config["parameters"])
+            cal = ABACUS(config["parameters"])
             # 对每一次单点计算，INPUT文件都一样。INPUT先写入到操作文件夹里。后续再复制到任务文件夹里
             cal.make_input("relax", INPUT)
 
@@ -129,7 +133,6 @@ def __make__():
 
             # 如果用dp模型计算，把模型文件也复制进来
             if config["interaction"]["method"] == "deepmd":
-                model = os.path.join(cwd, config["interaction"]["model"])
                 copy(model, os.getcwd())
 
         else:

@@ -1,11 +1,12 @@
 import os
 import sys
-
 import numpy as np
+
 from monty.serialization import loadfn, dumpfn
 from glob import glob
 from calculator.ABACUS import parse_abacus_log
 from calculator.LAMMPS import parse_lammps_log
+from make import clean_matrix
 
 
 def set_voigt(matrix: np.array((3, 3))):
@@ -85,6 +86,9 @@ def __post__():
     # 加载配置文件，使用monty.serialization.loadfn()以获得更高兼容性
     config = loadfn(sys.argv[1])
 
+    if config["calculator"] not in ["abacus", "lammps"]:
+        raise ValueError("Only support ABACUS or LAMMPS calculator")
+
     cwd = os.getcwd()
     # make步骤的工作文件夹为work
     work_path = os.path.join(cwd, "work")
@@ -116,12 +120,14 @@ def __post__():
         strains_list = []
 
         # 定位初始结构结构优化的输出log，并解析log文件得到初始应力；变胞结构应力要减去初始应力得到净应力再用于拟合
-        origin_output_log = os.path.join(
-            work_path,
-            os.pardir,
-            config["relax_log_dir"][strufile_index]
-        )
-        origin_stress = parse_abacus_log(origin_output_log)["stress"]
+        origin_output_log = os.path.join(cwd, config["relax_log_dir"][strufile_index])
+        if config["calculator"] == "abacus":
+            origin_stress = parse_abacus_log(origin_output_log)["stress"]
+        elif config["calculator"] == "lammps":
+            origin_stress = parse_lammps_log(origin_output_log)["stress"]
+        else:
+            raise ValueError("Only support ABACUS or LAMMPS calculator")
+
         # 如果进行了能量差分，初始应力使用EFD_task里差分得到的数据
         if EFD_flag:
             origin_stress = loadfn(os.path.join(work_path, stru_filename, "EFD_task", "stress.json"))
@@ -175,20 +181,23 @@ def __post__():
 
         # 单位转换
         if config["calculator"] == "abacus":
-            C /= 10.0  # 对于ABACUS，从KBAR到GPa
+            C /= 10.0  # 对于ABACUS，从KBar到GPa
         elif config["calculator"] == "lammps":
-            C /= 10000.0  # 对于ABACUS，从BAR到GPa
+            C /= 10000.0  # 对于LAMMPS，从Bar到GPa
         else:
             raise ValueError("Only support ABACUS or LAMMPS calculator")
+
+        # 对小于0.01GPa的结果，认为是数值误差，清除
+        cleaned_C = clean_matrix(C, float_tolerance=0.01)
 
         # 新建一个elastic_constant文件夹用于保存输出结果
         os.makedirs("elastic_constant", exist_ok=True)
 
         # 将弹性模量矩阵保存为.json文件
-        dumpfn(C, os.path.join(os.getcwd(), "elastic_constant", "elastic_constant.json"), indent=4)
+        dumpfn(cleaned_C, os.path.join(os.getcwd(), "elastic_constant", "elastic_constant.json"), indent=4)
 
         # 保存弹性模量矩阵、体积模量、杨氏模量、剪切模量、泊松比到.txt文件
-        print_result(C, os.path.join(os.getcwd(), "elastic_constant", "result.txt"))
+        print_result(cleaned_C, os.path.join(os.getcwd(), "elastic_constant", "result.txt"))
 
         strufile_index += 1
 

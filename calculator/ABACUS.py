@@ -1,10 +1,8 @@
-from Conf import Conf
 import numpy as np
 
 
 class ABACUS:
-    def __init__(self, stru: Conf, parameters: dict):
-        self.stru = stru
+    def __init__(self, parameters: dict):
         self.parameters = parameters
 
     def make_input(self, cal_type, output_file):
