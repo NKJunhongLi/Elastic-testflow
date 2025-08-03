@@ -67,7 +67,6 @@ class LAMMPS:
         template += "\n"
 
         # 计算能量和压强（应力）
-        template += "variable    V equal vol\n"
         template += "variable    E equal \"c_mype\"\n"
         template += "variable    Pxx equal pxx\n"
         template += "variable    Pyy equal pyy\n"

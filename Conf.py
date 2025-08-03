@@ -364,7 +364,7 @@ class Conf:
 
         return
 
-    def apply_deform(self, deform: DeformationTensor):
+    def apply_deform(self, deform):
         """将变形张量作用于结构，得到新晶格矢量和新的笛卡尔坐标，分数坐标不变"""
         # abacus结构文件格式下，新晶格矢量 = 转置(变形张量 点乘 转置(旧晶格矢量)) = 旧晶格矢量 点乘 转置(变形张量)
         new_lattice_vectors = np.dot(self.lattice_vectors, deform.deform_matrix.transpose())

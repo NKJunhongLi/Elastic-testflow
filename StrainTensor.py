@@ -4,6 +4,38 @@ from math import sqrt
 from abc import ABC, abstractmethod
 
 
+# 测试：构造为对称矩阵的变形梯度张量
+class SymmetricDeformationTensor:
+    """变形梯度张量，以3×3的numpy矩阵存储，构造为对称矩阵"""
+    def __init__(self):
+        # 3×3矩阵形式，初始化为单位矩阵
+        self.deform_matrix = np.eye(3)
+
+    @classmethod
+    def from_DeformationTensor(cls, deform: 'DeformationTensor'):
+        """
+        把上三角矩阵形式的变形张量转换为对称矩阵形式
+        :param deform: StrainTensor.DeformationTensor类型变量，存储构造为上三角矩阵的变形梯度张量
+        :return: StrainTensor.SymmetricDeformationTensor类型变量，存储构造为对称矩阵的变形梯度张量
+        """
+        instance = cls()
+
+        # 对角项不变
+        instance.deform_matrix[(0, 0)] = deform.deform_matrix[(0, 0)]
+        instance.deform_matrix[(1, 0)] = deform.deform_matrix[(1, 0)]
+        instance.deform_matrix[(2, 0)] = deform.deform_matrix[(2, 0)]
+
+        # 非对角项乘1/2后对称赋值
+        instance.deform_matrix[(0, 1)] = 0.5 * deform.deform_matrix[(0, 1)]
+        instance.deform_matrix[(1, 0)] = 0.5 * deform.deform_matrix[(0, 1)]
+        instance.deform_matrix[(0, 2)] = 0.5 * deform.deform_matrix[(0, 2)]
+        instance.deform_matrix[(2, 0)] = 0.5 * deform.deform_matrix[(0, 2)]
+        instance.deform_matrix[(1, 2)] = 0.5 * deform.deform_matrix[(1, 2)]
+        instance.deform_matrix[(2, 1)] = 0.5 * deform.deform_matrix[(1, 2)]
+
+        return instance
+
+
 class DeformationTensor:
     """变形梯度张量，以3×3的numpy矩阵存储，构造为上三角矩阵"""
     def __init__(self):

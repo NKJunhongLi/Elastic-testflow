@@ -29,7 +29,7 @@ class ABACUS:
 
         template += "# Parameters (Methods)\n"
         template += f"calculation    {cal_type}\n"
-        if cal_type != "relax" or cal_type != "scf":
+        if cal_type != "relax" and cal_type != "scf":
             raise ValueError("The function ABACUS.make_input() only support cal_type == 'relax' or 'scf'!")
         template += f"basis_type    {self.get_val('basis_type', 'lcao')}\n"
         template += f"ecutwfc    {str(self.get_val('ecutwfc', 100))}\n"

@@ -91,6 +91,9 @@ def __make__():
     cwd = os.getcwd()
     work_path = create_workpath(os.path.join(cwd, "work"))
 
+    # 进入工作目录
+    os.chdir(work_path)
+
     norm_deform_list = make_norm_deforms(config["norm_deform"])
     shear_deform_list = make_shear_deforms(config["shear_deform"])
 
@@ -109,7 +112,7 @@ def __make__():
         in_lammps = os.path.join(work_path, stru_name, "in.lammps")  # str型变量，记录LAMMPS输入文件的路径
         # 如果有使用deempd势函数模型，定义一个str型变量记录模型文件路径
         model = os.path.join(cwd, config["interaction"]["model"]) \
-            if config["interaction"]["method"] == "deepmd" else None
+            if config["calculator"] == "lammps" and config["interaction"]["method"] == "deepmd" else None
 
         if config["calculator"] == "abacus":
             original_conf = Conf.from_abacus(file)
