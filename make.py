@@ -69,7 +69,7 @@ def create_workpath(pathname: str) -> str:
     return os.path.join(os.getcwd(), pathname)
 
 
-def __make__():
+def make():
     """
     根据配置文件内的设置，对提供的结构文件施加应变，输出变胞后的STRU，并根据配置文件内的参数生成INPUT文件。\n
     在work目录下对每个提供的结构文件创建操作目录，并在操作目录内建好24个task文件夹。\n
@@ -100,10 +100,15 @@ def __make__():
     # 结构文件路径。将多个文件存在一个list里
     structures = [os.path.join(cwd, file) for file in config["stru_files"]]
 
+    # 这个变量用于生成文件夹序列号
+    strufile_index: int = 0
+
     for file in structures:
         # 对每个结构文件单独建一个文件夹用于操作
         stru_name = os.path.basename(file)
         os.makedirs(stru_name)
+        # os.makedirs(f"{strufile_index + 1}.{stru_name}")
+        strufile_index += 1
 
         # 先进入操作结构的文件夹
         os.chdir(os.path.join(work_path, stru_name))
@@ -199,4 +204,4 @@ def __make__():
 
 
 if __name__ == "__main__":
-    __make__()
+    make()

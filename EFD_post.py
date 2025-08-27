@@ -14,7 +14,7 @@ ABACUS_UnitTrans = 1602.1757722389546  # 从(eV/Angstrom^3)到KBar
 LAMMPS_UnitTrans = 1602176.634  # 从(eV/Angstrom^3)到Bar
 
 
-def __EFD_post__():
+def EFD_post():
     """
     在执行完EFD_make并完成全部自洽计算任务后，解析输出文件，完成能量的中心差分计算，得到应力stress。\n
     每个task对应结构的应力张量stress.json文件存储在EFD文件夹内。
@@ -158,4 +158,4 @@ def __EFD_post__():
 
 
 if __name__ == "__main__":
-    __EFD_post__()
+    EFD_post()

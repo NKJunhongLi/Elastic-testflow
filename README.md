@@ -373,9 +373,11 @@ $$
 本程序需要编写一个python dict字典格式的配置文件，用来设置ABACUS计算或LAMMPS计算、和生成变胞的参数。文件需要是.json格式，在程序中被`monty.serialization.loadfn()`函数读取。
 
 #### 使用ABACUS的配置文件样例如下，不妨命名为`abacus_config.json`
-```
+```json
 {
   "calculator": "abacus",
+  "OMP_NUM_THREADS": 1,
+  "MPIRUN_NUM_PROC": 2,
   "parameters": {
     "pseudo_dir": "/selected-Dojo/Pseudopotential/",
     "orbital_dir": "/selected-Dojo/selected_Orbs/",
@@ -383,6 +385,7 @@ $$
     "nspin": 1,
     "symmetry": 1,
     "basis_type": "lcao",
+    "ks_solver": "genelpa",
     "ecutwfc": 100,
     "scf_thr": 1e-8,
     "scf_nmax": 300,
@@ -405,19 +408,23 @@ $$
   ],
   "norm_deform": 0.01,
   "shear_deform": 0.01,
+  "run_efd": 0,
   "small_deform": 0.0001
 }
 ```
-此配置文件示例包括了所有本程序目前支持的设置项。说明如下
+此配置文件示例包括了几乎所有本程序目前支持的设置项。配置文件支持的所有参数设置说明如下
 
 |设置项|说明|允许设置值|默认值|
 |------|----|------------|------|
 |"calculator"|是用LAMMPS还是ABACUS做计算，决定了输入输出文件生成的格式|"abacus", "lammps"|无。必须显式设置|
+|"OMP_NUM_THREADS"|使用openmpi并行的线程数| - |1|
+|"MPIRUN_NUM_PROC"|使用mpirun并行的进程数| - |1|
 |"parameters"|一个字典，内容为主要的ABACUS输入INPUT文件设置| - | - |
 |"stru_files"|一个list，内容为（一个或多个）进行完结构优化的文件路径| - |必须显式设置|
 |"relax_log_dir"|一个list，内容为"stru_files"中对应文件结构优化任务的输出log路径，要求一一对应| - |必须显式设置|
 |"norm_deform"|进行正向应变的大小| - |0.01|
 |"shear_deform"|进行剪切应变的大小| - |0.01|
+|"run_efd"|设置是否进行能量差分计算应力Stress。0为不进行，1为进行|0, 1|0|
 |"small_deform"|能量差分计算应力stress时，进行微小应变的大小| - |0.0001|
 
 |"parameters"内容项|说明|允许设置值|默认值|
@@ -428,6 +435,9 @@ $$
 |"nspin"|波函数的自旋分量数。1为自旋简并，2为共线的自旋极化，4为非共线的自旋极化（自旋轨道耦合）计算| 1, 2, 4 |1|
 |"symmetry"|ABACUS计算中是否开启对称分析。1为进行对称性分析，0为只考虑时间反演对称性，-1为不考虑任何对称性。| -1, 0, 1 |1|
 |"basis_type"|ABACUS计算时用到的基组，pw为平面波基组，lcao为数值原子轨道基组| "pw", "lcao" |"lcao"|
+|"ks_solver"|在使用的基组下进行展开哈密顿矩阵的方法| "cg", "bpcg", "dav", "dav_subspace", "lapack", "genelpa", "scalapack_gvx", "cusolver", "cusolvermp", "elpa" |取决于基组和计算环境配置|
+|"pw_diag_ndim"|进行电子自洽迭代的Davidson算法的工作空间维度（波函数波包的数量，至少需要2）| - |4|
+|"pw_diag_nmax"|使用平面波基组时，"cg"、"bpcg"、"dav"、"dav_subspace"方法的最大迭代步数| - |40|
 |"ecutwfc"|波函数能量截断，单位Rydberg| - |100|
 |"scf_thr"|电子自洽迭代的收敛阈值| - |1e-7|
 |"scf_nmax"|电子自洽迭代的最大步数| - |100|
@@ -444,13 +454,14 @@ $$
 
 注意：
 1. 请提供赝势和轨道文件的**绝对路径**，可以直接在结构文件里写好，也可以在配置文件里设定文件夹配合结构文件里设定文件名。本程序与vaspkit等软件生成文件的方式不同，不会对给出的赝势和轨道文件进行复制或移动操作，也不会改写相对路径，只会复制或移动或生成结构文件。因此需要一开始确定好绝对路径，防止abacus任务提交时报错。
-2. 请确保在配置文件中"stru_files"提供的list里，每一个结构文件的**文件名不同**。可以是相同目录下的不同文件名，也可以是不同目录下的不同文件名，但不能是不同目录下的相同文件名。此限制由本程序自身缺陷导致，因为本程序生成工作目录是根据结构文件名命名，如果提供的结构文件名相同会导致不同结构的工作目录相互覆盖。日后更新计划改正这一问题。
+2. 请确保在配置文件中"stru_files"提供的list里，每一个结构文件的**文件名不同**。可以是相同目录下的不同文件名，也可以是不同目录下的不同文件名，但不能是不同目录下的相同文件名。此限制由本程序自身缺陷导致，因为本程序生成工作目录是根据结构文件名命名，如果提供的结构文件名相同会导致不同结构的工作目录相互覆盖。日后更新计划改正这一问题。  
 3. 本文档中给出的部分默认参数设置与ABACUS官方文档不同。当使用本程序生成输入文件且配置文件中有缺省设置时，默认计算参数请以本文档为准。
 
 #### 使用LAMMPS + DP势函数模型的配置文件样例如下，不妨命名为`lammps_config.json`
-```
+```json
 {
   "calculator": "lammps",
+  "MPIRUN_NUM_PROC": 2,
   "interaction": {
     "method": "deepmd",
     "model": "graph.pb",
@@ -472,6 +483,7 @@ $$
   "relax_log_dir": [ "confs/t_P42nmc/relax_task/log.lammps" ],
   "norm_deform": 0.01,
   "shear_deform": 0.01,
+  "run_efd": 0,
   "small_deform": 0.0001
 }
 ```
@@ -479,12 +491,14 @@ $$
 |设置项|说明|允许设置值|默认值|
 |------|----|----------|------|
 |"calculator"|是用LAMMPS还是ABACUS做计算，决定了输入输出文件生成的格式|"abacus", "lammps"|无。必须显式设置|
+|"MPIRUN_NUM_PROC"|使用mpirun并行的进程数| - |1|
 |"interaction"|一个字典，设置LAMMPS在MD模拟中使用的相互作用势信息。目前仅支持deepmd|"deepmd"|无。必须显式设置|
 |"parameters"|一个字典，内容为LAMMPS进行结构优化的参数| - |{"etol": 0, "ftol": 1e-10, "maxiter": 5000, "maximal": 500000}|
 |"stru_files"|一个list，内容为（一个或多个）进行完结构优化的文件路径| - |必须显式设置|
 |"relax_log_dir"|一个list，内容为"stru_files"中对应文件结构优化任务的输出log路径，要求一一对应| - |必须显式设置|
 |"norm_deform"|进行正向应变的大小| - |0.01|
 |"shear_deform"|进行剪切应变的大小| - |0.01|
+|"run_efd"|设置是否进行能量差分计算应力Stress。0为不进行，1为进行|0, 1|0|
 |"small_deform"|能量差分计算应力stress时，进行微小应变的大小| - |0.0001|
 
 |"interaction"内容项|说明|允许设置值|默认值|
@@ -508,6 +522,14 @@ $$
 一般来说，对于一组计算，准备1个配置文件就足够。
 
 ### 程序使用步骤
+在准备好配置文件后，命令行输入
+```
+python3 main.py config.json
+```
+即开始执行整个计算流程，等待计算完成即可。  
+实际使用中，请把`main.py`和`config.json`分别替换成脚本文件和配置文件的正确路径。
+
+以下部分介绍逐步执行的步骤。
 
 #### 变胞结构生成
 在准备好配置文件后，命令行输入
@@ -518,8 +540,8 @@ python3 make.py config.json
 实际使用中，请把`make.py`和`config.json`分别替换成脚本文件和配置文件的正确路径。
 
 #### 提交固定晶胞结构优化的计算任务
-这一步并未在主程序中集成，需要通过bash脚本单独另外完成。下面提供一个示例，不妨命名为`run_relax_tasks.sh`
-```
+通过bash脚本单独另外完成。下面提供一个示例，不妨命名为`run_relax_tasks.sh`
+```bash
 cd work/
 
 for stru in ./*/; do
@@ -544,7 +566,7 @@ python3 EFD_make.py config.json
 实际使用中，请把命令里`EFD_make.py`和`config.json`分别替换成脚本文件和配置文件的正确路径。
 
 接下来，提交计算任务。用一个bash脚本完成，不妨命名为`run_efd_task.sh`
-```
+```bash
 cd work/
 
 for stru in ./*/; do
@@ -614,4 +636,6 @@ Poisson Ratio = 0.06
 # 结尾
 这是一个完整的程序，经过多个计算任务测试，代码上没有恶性bug或error，功能可用。
 
-数据准确性上，以及进行了其它工作流、数据库的结果进行复现、对比的工作。一些结构的结果很准确，一些结构的结果差异巨大。代码和公式的正确性会持续验证，持续更新。
+数据准确性上，进行了与vaspkit + vasp，vaspkit + abacus，pymatgen + abacus对比的工作，相同输入参数下结果匹配。
+
+代码和公式的正确性会持续验证，持续更新。

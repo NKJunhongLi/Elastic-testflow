@@ -76,7 +76,7 @@ def print_result(C: np.array((6, 6)), output_filename):
     return
 
 
-def __post__():
+def post():
     # 从命令行中获得配置文件，如果没有给，报error并退出程序。
     if len(sys.argv) < 2:
         print("Usage: python3 post.py $(your configuration filename)")
@@ -205,4 +205,4 @@ def __post__():
 
 
 if __name__ == "__main__":
-    __post__()
+    post()

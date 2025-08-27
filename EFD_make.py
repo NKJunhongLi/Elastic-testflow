@@ -12,7 +12,7 @@ from calculator.ABACUS import ABACUS
 from calculator.LAMMPS import LAMMPS
 
 
-def __EFD_make__():
+def EFD_make():
     """
     在执行完make并运行完成relax任务后，对24个task变胞结构和初始结构生成微小应变结构，用于scf计算做能量差分。\n
     每个task文件夹内新建EFD文件夹，EFD文件夹内新建12个文件夹存储对应分量的微小应变结构，命名为 "xx+" "xx-" ... "zz+" "zz-"\n
@@ -161,4 +161,4 @@ def __EFD_make__():
 
 
 if __name__ == "__main__":
-    __EFD_make__()
+    EFD_make()

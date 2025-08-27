@@ -24,7 +24,11 @@ class ABACUS:
         template += f"nspin    {str(self.get_val('nspin', 1))}\n"
         template += f"symmetry    {str(self.get_val('symmetry', 1))}\n"
         template += f"esolver_type    ksdft\n"
-        template += f"ks_solver    {'cg' if self.parameters['basis_type'] == 'pw' else 'genelpa'}\n"
+        template += f"ks_solver    {self.parameters['ks_solver']}\n" if 'ks_solver' in self.parameters else ""
+        template += f"pw_diag_ndim    {str(self.parameters['pw_diag_ndim'])}\n" \
+            if 'pw_diag_ndim' in self.parameters else ""
+        template += f"pw_diag_nmax    {str(self.parameters['pw_diag_nmax'])}\n" \
+            if 'pw_diag_nmax' in self.parameters else ""
         template += "\n"
 
         template += "# Parameters (Methods)\n"
